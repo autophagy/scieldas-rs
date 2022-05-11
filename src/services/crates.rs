@@ -1,49 +1,6 @@
-use serde_json::Value;
+use crate::utils::{get_payload, readable_number};
 
 static CRATE_DOWNLOADS_URL: &'static str = "https://crates.io/api/v1/crates/";
-
-async fn get_payload(url: &str) -> Option<Value> {
-    let client = reqwest::Client::builder().user_agent("scieldas").build();
-
-    if let Ok(c) = client {
-        let response = c.get(url).send().await;
-
-        if let Ok(r) = response {
-            let root: Result<Value, reqwest::Error> = r.json().await;
-            if let Ok(s) = root {
-                Some(s)
-            } else {
-                None
-            }
-        } else {
-            None
-        }
-    } else {
-        None
-    }
-}
-
-fn readable_number(number: f64) -> String {
-    if number == 0.0 {
-        number.to_string()
-    } else {
-        let units = vec!["", "K", "M", "G", "T", "P"];
-        let magnitude: usize = number.abs().log(1000.0).floor() as usize;
-        let amnt = number.abs() / (1000.0_f64.powf(magnitude as f64));
-
-        if magnitude == 0 {
-            format!("{}", amnt)
-        } else {
-            let sign = if number > 0.0 { "" } else { "-" };
-            format!(
-                "{sign}{amnt}{unit}",
-                sign = sign,
-                amnt = amnt.floor(),
-                unit = units[magnitude]
-            )
-        }
-    }
-}
 
 #[get("/downloads/<crate_name>")]
 pub async fn get_crate_downloads(crate_name: &str) -> String {
