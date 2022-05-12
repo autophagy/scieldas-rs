@@ -1,6 +1,13 @@
+use cached::proc_macro::cached;
+use cached::TimedSizedCache;
 use serde_json::Value;
 use std::cmp;
 
+#[cached(
+    type = "TimedSizedCache<String, Option<Value>>",
+    create = "{ TimedSizedCache::with_size_and_lifespan(1000, 300) }",
+    convert = "{ url.to_string() }"
+)]
 pub async fn get_payload(url: &str) -> Option<Value> {
     let client = reqwest::Client::builder().user_agent("scieldas").build();
 
