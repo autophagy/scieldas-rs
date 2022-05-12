@@ -1,5 +1,5 @@
 [package]
-name = "scieldas-rs"
+name = "scieldas"
 version = "0.1.0"
 edition = "2021"
 

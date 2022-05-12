@@ -1185,7 +1185,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "scieldas-rs"
+name = "scieldas"
 version = "0.1.0"
 dependencies = [
  "reqwest",
