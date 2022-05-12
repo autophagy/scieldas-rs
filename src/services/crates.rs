@@ -1,10 +1,12 @@
+use crate::shields::TextShield;
 use crate::utils::{get_payload, readable_number};
 
 static CRATE_DOWNLOADS_URL: &'static str = "https://crates.io/api/v1/crates/";
 
 #[get("/downloads/<crate_name>")]
-pub async fn get_crate_downloads(crate_name: &str) -> String {
+pub async fn get_crate_downloads(crate_name: &str) -> TextShield {
     let request_url = format!("{}/{}", CRATE_DOWNLOADS_URL, crate_name);
+    let prefix = Some(String::from("Downloads"));
 
     if let Some(v) = get_payload(&request_url).await {
         let downloads = v
@@ -13,18 +15,30 @@ pub async fn get_crate_downloads(crate_name: &str) -> String {
             .and_then(|v| v.as_f64());
 
         if let Some(x) = downloads {
-            format!("Downloads :: {}", readable_number(x))
+            TextShield {
+                prefix,
+                value: readable_number(x),
+                ..Default::default()
+            }
         } else {
-            String::from("Downloads :: N/A")
+            TextShield {
+                prefix,
+                ..Default::default()
+            }
         }
     } else {
-        String::from("Downloads :: N/A")
+        TextShield {
+            prefix,
+            ..Default::default()
+        }
     }
 }
 
 #[get("/downloads/<crate_name>/<version>")]
-pub async fn get_crate_version_downloads(crate_name: &str, version: &str) -> String {
+pub async fn get_crate_version_downloads(crate_name: &str, version: &str) -> TextShield {
     let request_url = format!("{}/{}/{}", CRATE_DOWNLOADS_URL, crate_name, version);
+    let prefix = Some(format!("Downloads (v{})", version));
+
     if let Some(v) = get_payload(&request_url).await {
         let downloads = v
             .get("version")
@@ -32,17 +46,29 @@ pub async fn get_crate_version_downloads(crate_name: &str, version: &str) -> Str
             .and_then(|v| v.as_f64());
 
         match downloads {
-            Some(x) => format!("Downloads (v{}) :: {}", version, readable_number(x)),
-            None => format!("Downloads (v{}) :: N/A", version),
+            Some(x) => TextShield {
+                prefix,
+                value: readable_number(x),
+                ..Default::default()
+            },
+            None => TextShield {
+                prefix,
+                ..Default::default()
+            },
         }
     } else {
-        String::from("Error")
+        TextShield {
+            prefix,
+            ..Default::default()
+        }
     }
 }
 
 #[get("/version/<crate_name>")]
-pub async fn get_crate_version(crate_name: &str) -> String {
+pub async fn get_crate_version(crate_name: &str) -> TextShield {
     let request_url = format!("{}/{}", CRATE_DOWNLOADS_URL, crate_name);
+    let prefix = Some(String::from("Version"));
+
     if let Some(v) = get_payload(&request_url).await {
         let version = v
             .get("crate")
@@ -50,10 +76,20 @@ pub async fn get_crate_version(crate_name: &str) -> String {
             .and_then(|v| v.as_str());
 
         match version {
-            Some(x) => format!("Version :: {}", x),
-            None => String::from("Version :: N/A"),
+            Some(x) => TextShield {
+                prefix,
+                value: String::from(x),
+                ..Default::default()
+            },
+            None => TextShield {
+                prefix,
+                ..Default::default()
+            },
         }
     } else {
-        String::from("Error")
+        TextShield {
+            prefix,
+            ..Default::default()
+        }
     }
 }

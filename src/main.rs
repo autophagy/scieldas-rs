@@ -2,6 +2,7 @@
 extern crate rocket;
 
 mod services;
+mod shields;
 mod utils;
 
 #[get("/")]
