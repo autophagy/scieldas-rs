@@ -1,13 +1,60 @@
 use std::io::Cursor;
 
 use rocket::http::ContentType;
-use rocket::request::Request;
+use rocket::request::{FromParam, Request};
 use rocket::response::{self, Responder, Response};
+
+use std::path::PathBuf;
+
+pub enum Ext {
+    SVG,
+    TXT,
+}
+
+pub struct ShieldRequest {
+    pub body: String,
+    pub ext: Ext,
+}
+
+#[derive(Debug)]
+pub enum ShieldRequestError {
+    InvalidBody,
+    InvalidExt,
+}
+
+impl<'r> FromParam<'r> for ShieldRequest {
+    type Error = ShieldRequestError;
+
+    fn from_param(param: &'r str) -> Result<Self, Self::Error> {
+        let path: PathBuf = PathBuf::from(param);
+        let stem = path.file_stem();
+
+        if let Some(b) = stem {
+            let body = String::from(b.to_str().unwrap());
+            if param.ends_with(".svg") {
+                Ok(ShieldRequest {
+                    body: body,
+                    ext: Ext::SVG,
+                })
+            } else if param.ends_with(".txt") {
+                Ok(ShieldRequest {
+                    body: body,
+                    ext: Ext::TXT,
+                })
+            } else {
+                Err(ShieldRequestError::InvalidExt)
+            }
+        } else {
+            Err(ShieldRequestError::InvalidBody)
+        }
+    }
+}
 
 pub struct TextShield {
     pub prefix: Option<String>,
     pub suffix: Option<String>,
     pub value: String,
+    pub ext: Ext,
 }
 
 impl Default for TextShield {
@@ -16,6 +63,7 @@ impl Default for TextShield {
             prefix: None,
             suffix: None,
             value: String::from("N/A"),
+            ext: Ext::TXT,
         }
     }
 }
@@ -31,11 +79,21 @@ impl<'r> Responder<'r, 'static> for TextShield {
             Some(s) => format!(" {}", s),
             None => String::from(""),
         };
-        let value = svgify(format!("{}{}{}", prefix, self.value, suffix));
-        Response::build()
-            .header(ContentType::SVG)
-            .sized_body(value.len(), Cursor::new(value))
-            .ok()
+        let value = format!("{}{}{}", prefix, self.value, suffix);
+
+        match self.ext {
+            Ext::SVG => {
+                let svg = svgify(value);
+                Response::build()
+                    .header(ContentType::SVG)
+                    .sized_body(svg.len(), Cursor::new(svg))
+                    .ok()
+            }
+            Ext::TXT => Response::build()
+                .header(ContentType::Plain)
+                .sized_body(value.len(), Cursor::new(value))
+                .ok(),
+        }
     }
 }
 
