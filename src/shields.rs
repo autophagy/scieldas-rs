@@ -31,10 +31,31 @@ impl<'r> Responder<'r, 'static> for TextShield {
             Some(s) => format!(" {}", s),
             None => String::from(""),
         };
-        let value = format!("{}{}{}", prefix, self.value, suffix);
+        let value = svgify(format!("{}{}{}", prefix, self.value, suffix));
         Response::build()
-            .header(ContentType::Plain)
+            .header(ContentType::SVG)
             .sized_body(value.len(), Cursor::new(value))
             .ok()
     }
+}
+
+fn svgify(s: String) -> String {
+    let mut svg: String = "".to_string();
+    let width = (s.len() * 7) + 32;
+
+    let head = format!(
+        r#"<svg baseProfile="full" height="41px" version="1.1" width="{}px" xmlns="http://www.w3.org/2000/svg" xmlns:ev="http://www.w3.org/2001/xml-events" xmlns:xlink="http://www.w3.org/1999/xlink">"#,
+        width
+    );
+    svg.push_str(&head);
+
+    svg.push_str(r##"<rect fill="#2D2D2D" height="100%" width="100%" x="0" y="0" />"##);
+    let b = format!(
+        r##"<text fill="#F2F2F2" font-family="Inconsolata, Courier, monospace" font-size="140" textLength="{}" transform="scale(.1)" x="160" y="240">{}</text>"##,
+        (width * 10) - 320,
+        &s
+    );
+    svg.push_str(&b);
+    svg.push_str("</svg>");
+    svg
 }
