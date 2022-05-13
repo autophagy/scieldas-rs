@@ -6,20 +6,20 @@ use rocket::response::{self, Responder, Response};
 
 use std::path::PathBuf;
 
-pub enum Ext {
+pub enum SupportedFiletype {
     SVG,
     TXT,
 }
 
 pub struct ShieldRequest {
     pub body: String,
-    pub ext: Ext,
+    pub filetype: SupportedFiletype,
 }
 
 #[derive(Debug)]
 pub enum ShieldRequestError {
     InvalidBody,
-    InvalidExt,
+    InvalidFiletype,
 }
 
 impl<'r> FromParam<'r> for ShieldRequest {
@@ -34,15 +34,15 @@ impl<'r> FromParam<'r> for ShieldRequest {
             if param.ends_with(".svg") {
                 Ok(ShieldRequest {
                     body: body,
-                    ext: Ext::SVG,
+                    filetype: SupportedFiletype::SVG,
                 })
             } else if param.ends_with(".txt") {
                 Ok(ShieldRequest {
                     body: body,
-                    ext: Ext::TXT,
+                    filetype: SupportedFiletype::TXT,
                 })
             } else {
-                Err(ShieldRequestError::InvalidExt)
+                Err(ShieldRequestError::InvalidFiletype)
             }
         } else {
             Err(ShieldRequestError::InvalidBody)
@@ -54,7 +54,7 @@ pub struct TextShield {
     pub prefix: Option<String>,
     pub suffix: Option<String>,
     pub value: String,
-    pub ext: Ext,
+    pub filetype: SupportedFiletype,
 }
 
 impl Default for TextShield {
@@ -63,7 +63,7 @@ impl Default for TextShield {
             prefix: None,
             suffix: None,
             value: String::from("N/A"),
-            ext: Ext::TXT,
+            filetype: SupportedFiletype::TXT,
         }
     }
 }
@@ -81,15 +81,15 @@ impl<'r> Responder<'r, 'static> for TextShield {
         };
         let value = format!("{}{}{}", prefix, self.value, suffix);
 
-        match self.ext {
-            Ext::SVG => {
+        match self.filetype {
+            SupportedFiletype::SVG => {
                 let svg = svgify(value);
                 Response::build()
                     .header(ContentType::SVG)
                     .sized_body(svg.len(), Cursor::new(svg))
                     .ok()
             }
-            Ext::TXT => Response::build()
+            SupportedFiletype::TXT => Response::build()
                 .header(ContentType::Plain)
                 .sized_body(value.len(), Cursor::new(value))
                 .ok(),

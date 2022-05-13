@@ -18,20 +18,20 @@ pub async fn get_crate_downloads(crate_name: ShieldRequest) -> TextShield {
             TextShield {
                 prefix,
                 value: readable_number(x),
-                ext: crate_name.ext,
+                filetype: crate_name.filetype,
                 ..Default::default()
             }
         } else {
             TextShield {
                 prefix,
-                ext: crate_name.ext,
+                filetype: crate_name.filetype,
                 ..Default::default()
             }
         }
     } else {
         TextShield {
             prefix,
-            ext: crate_name.ext,
+            filetype: crate_name.filetype,
             ..Default::default()
         }
     }
@@ -52,19 +52,19 @@ pub async fn get_crate_version_downloads(crate_name: &str, version: ShieldReques
             Some(x) => TextShield {
                 prefix,
                 value: readable_number(x),
-                ext: version.ext,
+                filetype: version.filetype,
                 ..Default::default()
             },
             None => TextShield {
                 prefix,
-                ext: version.ext,
+                filetype: version.filetype,
                 ..Default::default()
             },
         }
     } else {
         TextShield {
             prefix,
-            ext: version.ext,
+            filetype: version.filetype,
             ..Default::default()
         }
     }
@@ -85,19 +85,19 @@ pub async fn get_crate_version(crate_name: ShieldRequest) -> TextShield {
             Some(x) => TextShield {
                 prefix,
                 value: String::from(x),
-                ext: crate_name.ext,
+                filetype: crate_name.filetype,
                 ..Default::default()
             },
             None => TextShield {
                 prefix,
-                ext: crate_name.ext,
+                filetype: crate_name.filetype,
                 ..Default::default()
             },
         }
     } else {
         TextShield {
             prefix,
-            ext: crate_name.ext,
+            filetype: crate_name.filetype,
             ..Default::default()
         }
     }
