@@ -50,8 +50,12 @@ impl<'r> FromParam<'r> for ShieldRequest {
     }
 }
 
+pub trait RenderableShield {
+    fn render(&self) -> String;
+}
+
 pub struct TextShield {
-    pub prefix: Option<String>,
+    pub prefix: String,
     pub suffix: Option<String>,
     pub value: String,
     pub filetype: SupportedFiletype,
@@ -60,7 +64,7 @@ pub struct TextShield {
 impl Default for TextShield {
     fn default() -> TextShield {
         TextShield {
-            prefix: None,
+            prefix: String::from("!"),
             suffix: None,
             value: String::from("N/A"),
             filetype: SupportedFiletype::Txt,
@@ -68,32 +72,38 @@ impl Default for TextShield {
     }
 }
 
-#[rocket::async_trait]
-impl<'r> Responder<'r, 'static> for TextShield {
-    fn respond_to(self, _: &'r Request<'_>) -> response::Result<'static> {
-        let prefix = match &self.prefix {
-            Some(s) => format!("{} :: ", s),
-            None => String::from(""),
-        };
+impl RenderableShield for TextShield {
+    fn render(&self) -> String {
+        let prefix = format!("{} :: ", &self.prefix);
         let suffix = match &self.suffix {
             Some(s) => format!(" {}", s),
             None => String::from(""),
         };
-        let value = format!("{}{}{}", prefix, self.value, suffix);
+        format!("{}{}{}", prefix, self.value, suffix)
+    }
+}
 
-        match self.filetype {
-            SupportedFiletype::Svg => {
-                let svg = svgify(value);
-                Response::build()
-                    .header(ContentType::SVG)
-                    .sized_body(svg.len(), Cursor::new(svg))
-                    .ok()
-            }
-            SupportedFiletype::Txt => Response::build()
-                .header(ContentType::Plain)
-                .sized_body(value.len(), Cursor::new(value))
-                .ok(),
+#[rocket::async_trait]
+impl<'r> Responder<'r, 'static> for TextShield {
+    fn respond_to(self, _: &'r Request<'_>) -> response::Result<'static> {
+        let value = self.render();
+        render_for_filetype(value, self.filetype)
+    }
+}
+
+fn render_for_filetype(value: String, filetype: SupportedFiletype) -> response::Result<'static> {
+    match filetype {
+        SupportedFiletype::Svg => {
+            let svg = svgify(value);
+            Response::build()
+                .header(ContentType::SVG)
+                .sized_body(svg.len(), Cursor::new(svg))
+                .ok()
         }
+        SupportedFiletype::Txt => Response::build()
+            .header(ContentType::Plain)
+            .sized_body(value.len(), Cursor::new(value))
+            .ok(),
     }
 }
 
