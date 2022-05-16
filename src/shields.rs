@@ -7,6 +7,7 @@ use rocket::response::{self, Responder, Response};
 use std::path::PathBuf;
 
 pub enum SupportedFiletype {
+    Png,
     Svg,
     Txt,
 }
@@ -31,7 +32,12 @@ impl<'r> FromParam<'r> for ShieldRequest {
 
         if let Some(b) = stem {
             let body = String::from(b.to_str().unwrap());
-            if param.ends_with(".svg") {
+            if param.ends_with(".png") {
+                Ok(ShieldRequest {
+                    body,
+                    filetype: SupportedFiletype::Png,
+                })
+            } else if param.ends_with(".svg") {
                 Ok(ShieldRequest {
                     body,
                     filetype: SupportedFiletype::Svg,
@@ -93,6 +99,13 @@ impl<'r> Responder<'r, 'static> for TextShield {
 
 fn render_for_filetype(value: String, filetype: SupportedFiletype) -> response::Result<'static> {
     match filetype {
+        SupportedFiletype::Png => {
+            let png = pngify(&svgify(value));
+            Response::build()
+                .header(ContentType::PNG)
+                .sized_body(png.len(), Cursor::new(png))
+                .ok()
+        }
         SupportedFiletype::Svg => {
             let svg = svgify(value);
             Response::build()
@@ -107,6 +120,25 @@ fn render_for_filetype(value: String, filetype: SupportedFiletype) -> response::
     }
 }
 
+fn pngify(svg: &str) -> Vec<u8> {
+    let mut opt = usvg::Options::default();
+    opt.fontdb.load_system_fonts();
+    opt.fontdb.set_monospace_family("Inconsolata Nerd Font");
+
+    let rtree = usvg::Tree::from_str(svg, &opt.to_ref()).unwrap();
+
+    let pixmap_size = rtree.svg_node().size.to_screen_size();
+    let mut pixmap = tiny_skia::Pixmap::new(pixmap_size.width(), pixmap_size.height()).unwrap();
+    resvg::render(
+        &rtree,
+        usvg::FitTo::Original,
+        tiny_skia::Transform::default(),
+        pixmap.as_mut(),
+    )
+    .unwrap();
+    pixmap.encode_png().unwrap()
+}
+
 fn svgify(s: String) -> String {
     let mut svg: String = "".to_string();
     let width = (s.len() * 7) + 32;
@@ -119,7 +151,7 @@ fn svgify(s: String) -> String {
 
     svg.push_str(r##"<rect fill="#2D2D2D" height="100%" width="100%" x="0" y="0" />"##);
     let b = format!(
-        r##"<text fill="#F2F2F2" font-family="Inconsolata, Courier, monospace" font-size="140" textLength="{}" transform="scale(.1)" x="160" y="240">{}</text>"##,
+        r##"<text fill="#F2F2F2" font-family="monospace" font-size="140" textLength="{}" transform="scale(.1)" x="160" y="240">{}</text>"##,
         (width * 10) - 320,
         &s
     );
