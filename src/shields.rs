@@ -7,8 +7,8 @@ use rocket::response::{self, Responder, Response};
 use std::path::PathBuf;
 
 pub enum SupportedFiletype {
-    SVG,
-    TXT,
+    Svg,
+    Txt,
 }
 
 pub struct ShieldRequest {
@@ -33,13 +33,13 @@ impl<'r> FromParam<'r> for ShieldRequest {
             let body = String::from(b.to_str().unwrap());
             if param.ends_with(".svg") {
                 Ok(ShieldRequest {
-                    body: body,
-                    filetype: SupportedFiletype::SVG,
+                    body,
+                    filetype: SupportedFiletype::Svg,
                 })
             } else if param.ends_with(".txt") {
                 Ok(ShieldRequest {
-                    body: body,
-                    filetype: SupportedFiletype::TXT,
+                    body,
+                    filetype: SupportedFiletype::Txt,
                 })
             } else {
                 Err(ShieldRequestError::InvalidFiletype)
@@ -63,7 +63,7 @@ impl Default for TextShield {
             prefix: None,
             suffix: None,
             value: String::from("N/A"),
-            filetype: SupportedFiletype::TXT,
+            filetype: SupportedFiletype::Txt,
         }
     }
 }
@@ -82,14 +82,14 @@ impl<'r> Responder<'r, 'static> for TextShield {
         let value = format!("{}{}{}", prefix, self.value, suffix);
 
         match self.filetype {
-            SupportedFiletype::SVG => {
+            SupportedFiletype::Svg => {
                 let svg = svgify(value);
                 Response::build()
                     .header(ContentType::SVG)
                     .sized_body(svg.len(), Cursor::new(svg))
                     .ok()
             }
-            SupportedFiletype::TXT => Response::build()
+            SupportedFiletype::Txt => Response::build()
                 .header(ContentType::Plain)
                 .sized_body(value.len(), Cursor::new(value))
                 .ok(),

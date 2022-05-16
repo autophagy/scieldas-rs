@@ -1,7 +1,7 @@
 use crate::shields::{ShieldRequest, TextShield};
 use crate::utils::{get_payload, readable_number};
 
-static CRATE_API_URL: &'static str = "https://crates.io/api/v1/crates/";
+static CRATE_API_URL: &str = "https://crates.io/api/v1/crates/";
 
 #[get("/downloads/<crate_name>")]
 pub async fn get_crate_downloads(crate_name: ShieldRequest) -> TextShield {
