@@ -25,6 +25,9 @@ RUN groupadd scieldas && useradd -g scieldas scieldas && mkdir -p ${APP}
 
 COPY --from=timbrend /scieldas/target/release/scieldas ${APP}/scieldas
 
+ENV ROCKET_CONFIG=${APP}/rocket.toml
+ADD ./rocket.toml ${APP}/rocket.toml
+
 RUN chown -R scieldas:scieldas ${APP}
 
 USER scieldas
