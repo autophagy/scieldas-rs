@@ -23,4 +23,8 @@ fn rocket() -> _ {
             ],
         )
         .mount("/licenses", routes![services::licenses::get_license])
+        .mount(
+            "/codestyles",
+            routes![services::codestyles::get_python_style],
+        )
 }
