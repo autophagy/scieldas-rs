@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use std::io::Cursor;
 
 use rocket::http::ContentType;
@@ -94,6 +95,51 @@ impl RenderableShield for TextShield {
 
 #[rocket::async_trait]
 impl<'r> Responder<'r, 'static> for TextShield {
+    fn respond_to(self, _: &'r Request<'_>) -> response::Result<'static> {
+        let value = self.render();
+        render_for_filetype(value, self.filetype)
+    }
+}
+
+pub struct StateShield {
+    pub prefix: Option<String>,
+    pub suffix: Option<String>,
+    pub value: String,
+    pub states: HashMap<String, String>,
+    pub filetype: SupportedFiletype,
+}
+
+impl Default for StateShield {
+    fn default() -> StateShield {
+        StateShield {
+            prefix: None,
+            suffix: None,
+            value: "".to_string(),
+            states: HashMap::from([("".to_string(), "N/A".to_string())]),
+            filetype: SupportedFiletype::Txt,
+        }
+    }
+}
+
+impl RenderableShield for StateShield {
+    fn render(&self) -> String {
+        let prefix = match &self.prefix {
+            Some(s) => format!("{} :: ", &s),
+            None => "".to_string(),
+        };
+        let suffix = match &self.suffix {
+            Some(s) => format!(" {}", s),
+            None => "".to_string(),
+        };
+        let value = match self.states.get(&self.value) {
+            Some(v) => v,
+            None => "N/A",
+        };
+        format!("{}{}{}", prefix, value, suffix)
+    }
+}
+#[rocket::async_trait]
+impl<'r> Responder<'r, 'static> for StateShield {
     fn respond_to(self, _: &'r Request<'_>) -> response::Result<'static> {
         let value = self.render();
         render_for_filetype(value, self.filetype)

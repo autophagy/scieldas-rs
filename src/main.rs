@@ -12,12 +12,15 @@ fn health() -> &'static str {
 
 #[launch]
 fn rocket() -> _ {
-    rocket::build().mount("/", routes![health]).mount(
-        "/crates",
-        routes![
-            services::crates::get_crate_downloads,
-            services::crates::get_crate_version_downloads,
-            services::crates::get_crate_version
-        ],
-    )
+    rocket::build()
+        .mount("/", routes![health])
+        .mount(
+            "/crates",
+            routes![
+                services::crates::get_crate_downloads,
+                services::crates::get_crate_version_downloads,
+                services::crates::get_crate_version
+            ],
+        )
+        .mount("/licenses", routes![services::licenses::get_license])
 }
