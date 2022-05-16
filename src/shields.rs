@@ -4,6 +4,9 @@ use rocket::http::ContentType;
 use rocket::request::{FromParam, Request};
 use rocket::response::{self, Responder, Response};
 
+use cached::proc_macro::cached;
+use cached::SizedCache;
+
 use std::path::PathBuf;
 
 pub enum SupportedFiletype {
@@ -120,6 +123,11 @@ fn render_for_filetype(value: String, filetype: SupportedFiletype) -> response::
     }
 }
 
+#[cached(
+    type = "SizedCache<String, Vec<u8>>",
+    create = "{ SizedCache::with_size(1000) }",
+    convert = "{ svg.to_string() }"
+)]
 fn pngify(svg: &str) -> Vec<u8> {
     let mut opt = usvg::Options::default();
     opt.fontdb.load_system_fonts();
