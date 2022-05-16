@@ -131,7 +131,7 @@ fn render_for_filetype(value: String, filetype: SupportedFiletype) -> response::
 fn pngify(svg: &str) -> Vec<u8> {
     let mut opt = usvg::Options::default();
     opt.fontdb.load_system_fonts();
-    opt.fontdb.set_monospace_family("Inconsolata Nerd Font");
+    opt.fontdb.set_monospace_family("Inconsolata");
 
     let rtree = usvg::Tree::from_str(svg, &opt.to_ref()).unwrap();
 
