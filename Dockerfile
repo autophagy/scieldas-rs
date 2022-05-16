@@ -16,7 +16,7 @@ FROM debian:bookworm-slim
 ARG APP=/usr/src/scieldas
 
 RUN apt-get update \
-    && apt-get install -y ca-certificates fonts-inconsolata \
+    && apt-get install -y ca-certificates fonts-inconsolata curl \
     && rm -rf /var/lib/apt/lists/*
 
 EXPOSE 8000
@@ -32,5 +32,7 @@ RUN chown -R scieldas:scieldas ${APP}
 
 USER scieldas
 WORKDIR ${APP}
+
+HEALTHCHECK CMD curl --fail http://0.0.0.0:8000/health || exit 1
 
 CMD ["./scieldas"]
