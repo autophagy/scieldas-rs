@@ -47,7 +47,7 @@ jobs:
       - name: Rustfmt check
         run: nix develop -c cargo fmt --all -- --check
       - name: Clippy check
-        run: nix develop -c cargo clippy --all --all-targets -- -D warnings
+        run: nix develop -c cargo clippy -p scieldas -- -D warnings --no-deps
 
   test:
     name: Test
