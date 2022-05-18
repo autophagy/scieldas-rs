@@ -5,7 +5,7 @@ on:
       - main
 
 
-name: Nix Build
+name: CI
 
 jobs:
   build:
@@ -46,8 +46,8 @@ jobs:
         run: nix develop -c cargo check
       - name: Rustfmt check
         run: nix develop -c cargo fmt --all -- --check
-      - name: Clippy check
-        run: nix develop -c cargo clippy -p scieldas -- -D warnings --no-deps
+#     - name: Clippy check
+#       run: nix develop -c cargo clippy -p scieldas -- -D warnings --no-deps
 
   test:
     name: Test
