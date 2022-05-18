@@ -26,7 +26,7 @@
 
         # Nix develop
         devShell = pkgs.mkShell {
-          nativeBuildInputs = with pkgs; [ rustc cargo rustfmt clippy ];
+          nativeBuildInputs = with pkgs; [ rustc cargo rustfmt clippy openssl ];
         };
       }
     );
