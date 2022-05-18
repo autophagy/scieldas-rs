@@ -2,7 +2,7 @@
   inputs = {
     cargo2nix.url = "github:cargo2nix/cargo2nix/master";
     flake-utils.url = "github:numtide/flake-utils";
-    nixpkgs.url = "github:nixos/nixpkgs?ref=release-21.11";
+    nixpkgs.url = "github:nixos/nixpkgs?ref=master";
   };
 
   outputs = { self, nixpkgs, cargo2nix, flake-utils, ... }:
@@ -23,6 +23,11 @@
           scieldas = (rustPkgs.workspace.scieldas {}).bin;
         };
         defaultPackage = packages.scieldas;
+
+        # Nix develop
+        devShell = pkgs.mkShell {
+          nativeBuildInputs = with pkgs; [ rustc cargo rustfmt clippy ];
+        };
       }
     );
 }
