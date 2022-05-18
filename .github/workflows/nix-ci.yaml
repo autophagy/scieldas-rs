@@ -1,0 +1,27 @@
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+
+name: Nix Build
+
+jobs:
+  build:
+    name: Nix build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: cachix/install-nix-action@v15
+        with:
+          extra_nix_config: |
+            access-tokens = github.com=${{ secrets.GITHUB_TOKEN }}
+            log-lines = 200
+      - uses: cachix/cachix-action@v10
+        with:
+          name: cargo2nix-gh
+          authToken: ${{ secrets.CACHIX_AUTH_TOKEN }}
+          pushFilter: "(rustc-1.60.0-x86_64-unknown-linux-gnu$|.drv.chroot$)"
+      - name: Build Scieldas
+        run: nix build
