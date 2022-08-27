@@ -16,6 +16,19 @@ pub enum SupportedFiletype {
     Txt,
 }
 
+pub struct Shield<T: RenderableShield> {
+    pub shield: T,
+    pub filetype: SupportedFiletype,
+}
+
+#[rocket::async_trait]
+impl<'r, T: RenderableShield> Responder<'r, 'static> for Shield<T> {
+    fn respond_to(self, _: &'r Request<'_>) -> response::Result<'static> {
+        let value = self.shield.render();
+        render_for_filetype(value, self.filetype)
+    }
+}
+
 pub struct ShieldRequest {
     pub body: String,
     pub filetype: SupportedFiletype,
@@ -68,16 +81,14 @@ pub struct TextShield {
     pub prefix: String,
     pub suffix: Option<String>,
     pub value: String,
-    pub filetype: SupportedFiletype,
 }
 
 impl Default for TextShield {
     fn default() -> TextShield {
         TextShield {
-            prefix: String::from("!"),
+            prefix: "!".to_string(),
             suffix: None,
-            value: String::from("N/A"),
-            filetype: SupportedFiletype::Txt,
+            value: "N/A".to_string(),
         }
     }
 }
@@ -93,20 +104,11 @@ impl RenderableShield for TextShield {
     }
 }
 
-#[rocket::async_trait]
-impl<'r> Responder<'r, 'static> for TextShield {
-    fn respond_to(self, _: &'r Request<'_>) -> response::Result<'static> {
-        let value = self.render();
-        render_for_filetype(value, self.filetype)
-    }
-}
-
 pub struct StateShield {
     pub prefix: Option<String>,
     pub suffix: Option<String>,
     pub value: String,
     pub states: HashMap<String, String>,
-    pub filetype: SupportedFiletype,
 }
 
 impl Default for StateShield {
@@ -116,7 +118,6 @@ impl Default for StateShield {
             suffix: None,
             value: "".to_string(),
             states: HashMap::from([("".to_string(), "N/A".to_string())]),
-            filetype: SupportedFiletype::Txt,
         }
     }
 }
@@ -136,13 +137,6 @@ impl RenderableShield for StateShield {
             None => "N/A",
         };
         format!("{}{}{}", prefix, value, suffix)
-    }
-}
-#[rocket::async_trait]
-impl<'r> Responder<'r, 'static> for StateShield {
-    fn respond_to(self, _: &'r Request<'_>) -> response::Result<'static> {
-        let value = self.render();
-        render_for_filetype(value, self.filetype)
     }
 }
 
@@ -205,7 +199,7 @@ fn svgify(s: String) -> String {
 
     svg.push_str(r##"<rect fill="#2D2D2D" height="100%" width="100%" x="0" y="0" />"##);
     let b = format!(
-        r##"<text fill="#F2F2F2" font-family="monospace" font-size="140" textLength="{}" transform="scale(.1)" x="160" y="240">{}</text>"##,
+        r##"<text fill="#F2F2F2" font-family="Inconsolata Nerd Font, Inconsolata, monospace" font-size="140" textLength="{}" transform="scale(.1)" x="160" y="240">{}</text>"##,
         (width * 10) - 320,
         &s
     );

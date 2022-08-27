@@ -1,33 +1,30 @@
 {
   inputs = {
-    cargo2nix.url = "github:cargo2nix/cargo2nix/master";
-    flake-utils.url = "github:numtide/flake-utils";
-    nixpkgs.url = "github:nixos/nixpkgs?ref=master";
+    naersk.url = "github:nix-community/naersk/master";
+    nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
+    utils.url = "github:numtide/flake-utils";
   };
 
-  outputs = { self, nixpkgs, cargo2nix, flake-utils, ... }:
-    flake-utils.lib.eachDefaultSystem (system:
+  outputs = { self, nixpkgs, utils, naersk }:
+    utils.lib.eachDefaultSystem (system:
       let
-        pkgs = import nixpkgs {
-          inherit system;
-          overlays = [cargo2nix.overlay];
+        pkgs = import nixpkgs { inherit system; };
+        naersk-lib = pkgs.callPackage naersk { };
+      in
+      {
+        packages = rec {
+          scieldas = naersk-lib.buildPackage {
+            root = ./.;
+            buildInputs = with pkgs; [ pkg-config openssl ];
+            doCheck = true;
+          };
+
+          default = self.packages.${system}.scieldas;
         };
 
-        rustPkgs = pkgs.rustBuilder.makePackageSet {
-          rustVersion = "1.60.0";
-          packageFun = import ./Cargo.nix;
+        devShell = with pkgs; mkShell {
+          buildInputs = [ cargo rustc rustfmt pre-commit rustPackages.clippy dhall openssl pkg-config ];
+          RUST_SRC_PATH = rustPlatform.rustLibSrc;
         };
-
-      in rec {
-        packages = {
-          scieldas = (rustPkgs.workspace.scieldas {}).bin;
-        };
-        defaultPackage = packages.scieldas;
-
-        # Nix develop
-        devShell = pkgs.mkShell {
-          nativeBuildInputs = with pkgs; [ rustc cargo rustfmt clippy openssl ];
-        };
-      }
-    );
+      });
 }

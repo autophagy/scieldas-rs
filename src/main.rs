@@ -5,6 +5,11 @@ mod services;
 mod shields;
 mod utils;
 
+#[get("/")]
+fn index() -> &'static str {
+    "Scieldas."
+}
+
 #[get("/health")]
 fn health() -> &'static str {
     "OK"
@@ -13,7 +18,7 @@ fn health() -> &'static str {
 #[launch]
 fn rocket() -> _ {
     rocket::build()
-        .mount("/", routes![health])
+        .mount("/", routes![index, health])
         .mount(
             "/crates",
             routes![
