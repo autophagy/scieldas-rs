@@ -19,6 +19,27 @@
             doCheck = true;
           };
 
+          docker =
+            let
+              inherit (self.packages.${system}) scieldas;
+            in
+            pkgs.dockerTools.buildLayeredImage {
+              name = "scieldas";
+              contents = [ scieldas ];
+              config = {
+                Env = [
+                  "ROCKET_LOG_LEVEL=debug"
+                  "ROCKET_ADDRESS=0.0.0.0"
+                ];
+                Cmd = [
+                  "${scieldas}/bin/scieldas"
+                ];
+                ExposedPorts = {
+                  "8000/tcp" = { };
+                };
+              };
+            };
+
           default = self.packages.${system}.scieldas;
         };
 
