@@ -1,7 +1,7 @@
-use crate::shields::{Shield, ShieldRequest, StateShield};
+use crate::scieldas::{Scield, ScieldRequest, StateScield};
 use phf::phf_map;
 
-const LICENCE_SHIELD: StateShield = StateShield {
+const LICENCE_SCIELD: StateScield = StateScield {
     prefix: None,
     suffix: None,
     states: phf_map! {
@@ -12,9 +12,9 @@ const LICENCE_SHIELD: StateShield = StateShield {
 };
 
 #[get("/<license>")]
-pub async fn get_license(license: ShieldRequest) -> Shield<StateShield> {
-    Shield {
-        shield: LICENCE_SHIELD,
+pub async fn get_license(license: ScieldRequest) -> Scield<StateScield> {
+    Scield {
+        scield: LICENCE_SCIELD,
         value: license.body.to_lowercase(),
         filetype: license.filetype,
     }

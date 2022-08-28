@@ -1,7 +1,7 @@
-use crate::shields::{Shield, ShieldRequest, StateShield};
+use crate::scieldas::{Scield, ScieldRequest, StateScield};
 use phf::phf_map;
 
-const PYTHON_STYLE_SHIELD: StateShield = StateShield {
+const PYTHON_STYLE_SCIELD: StateScield = StateScield {
     prefix: Some("Style"),
     suffix: None,
     states: phf_map! {
@@ -12,9 +12,9 @@ const PYTHON_STYLE_SHIELD: StateShield = StateShield {
 };
 
 #[get("/python/<codestyle>")]
-pub async fn get_python_style(codestyle: ShieldRequest) -> Shield<StateShield> {
-    Shield {
-        shield: PYTHON_STYLE_SHIELD,
+pub async fn get_python_style(codestyle: ScieldRequest) -> Scield<StateScield> {
+    Scield {
+        scield: PYTHON_STYLE_SCIELD,
         value: codestyle.body.to_lowercase(),
         filetype: codestyle.filetype,
     }

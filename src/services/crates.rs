@@ -1,20 +1,20 @@
-use crate::shields::{Shield, ShieldRequest, TextShield};
+use crate::scieldas::{Scield, ScieldRequest, TextScield};
 use crate::utils::{get_payload, readable_number};
 
 const CRATE_API_URL: &str = "https://crates.io/api/v1/crates/";
 
-const CRATE_DOWNLOADS_SHIELD: TextShield = TextShield {
+const CRATE_DOWNLOADS_SCIELD: TextScield = TextScield {
     prefix: "Downloads",
     suffix: None,
 };
 
-const CRATE_VERSION_SHIELD: TextShield = TextShield {
+const CRATE_VERSION_SCIELD: TextScield = TextScield {
     prefix: "Version",
     suffix: None,
 };
 
 #[get("/downloads/<crate_name>")]
-pub async fn get_crate_downloads(crate_name: ShieldRequest) -> Option<Shield<TextShield>> {
+pub async fn get_crate_downloads(crate_name: ScieldRequest) -> Option<Scield<TextScield>> {
     let request_url = format!("{}/{}", CRATE_API_URL, crate_name.body);
 
     let downloads = get_payload(&request_url)
@@ -23,8 +23,8 @@ pub async fn get_crate_downloads(crate_name: ShieldRequest) -> Option<Shield<Tex
         .get("downloads")?
         .as_f64()?;
 
-    Some(Shield {
-        shield: CRATE_DOWNLOADS_SHIELD,
+    Some(Scield {
+        scield: CRATE_DOWNLOADS_SCIELD,
         value: readable_number(downloads),
         filetype: crate_name.filetype,
     })
@@ -33,8 +33,8 @@ pub async fn get_crate_downloads(crate_name: ShieldRequest) -> Option<Shield<Tex
 #[get("/downloads/<crate_name>/<version>")]
 pub async fn get_crate_version_downloads(
     crate_name: &str,
-    version: ShieldRequest,
-) -> Option<Shield<TextShield>> {
+    version: ScieldRequest,
+) -> Option<Scield<TextScield>> {
     let request_url = format!("{}/{}/{}", CRATE_API_URL, crate_name, version.body);
 
     let downloads = get_payload(&request_url)
@@ -43,15 +43,15 @@ pub async fn get_crate_version_downloads(
         .get("downloads")?
         .as_f64()?;
 
-    Some(Shield {
-        shield: CRATE_DOWNLOADS_SHIELD,
+    Some(Scield {
+        scield: CRATE_DOWNLOADS_SCIELD,
         value: readable_number(downloads),
         filetype: version.filetype,
     })
 }
 
 #[get("/version/<crate_name>")]
-pub async fn get_crate_version(crate_name: ShieldRequest) -> Option<Shield<TextShield>> {
+pub async fn get_crate_version(crate_name: ScieldRequest) -> Option<Scield<TextScield>> {
     let request_url = format!("{}/{}", CRATE_API_URL, crate_name.body);
 
     let version = String::from(
@@ -62,8 +62,8 @@ pub async fn get_crate_version(crate_name: ShieldRequest) -> Option<Shield<TextS
             .as_str()?,
     );
 
-    Some(Shield {
-        shield: CRATE_VERSION_SHIELD,
+    Some(Scield {
+        scield: CRATE_VERSION_SCIELD,
         value: version,
         filetype: crate_name.filetype,
     })

@@ -12,15 +12,15 @@ pub enum SupportedFiletype {
     Txt,
 }
 
-pub struct Shield<T: RenderableShield> {
-    pub shield: T,
+pub struct Scield<T: RenderableScield> {
+    pub scield: T,
     pub value: String,
     pub filetype: SupportedFiletype,
 }
 
-impl<T: RenderableShield> Shield<T> {
+impl<T: RenderableScield> Scield<T> {
     fn to_svg(&self) -> String {
-        let value = self.shield.render(&self.value);
+        let value = self.scield.render(&self.value);
         let mut svg: String = "".to_string();
         let width = (&value.len() * 7) + 32;
 
@@ -63,7 +63,7 @@ impl<T: RenderableShield> Shield<T> {
 }
 
 #[rocket::async_trait]
-impl<'r, T: RenderableShield> Responder<'r, 'static> for Shield<T> {
+impl<'r, T: RenderableScield> Responder<'r, 'static> for Scield<T> {
     fn respond_to(self, _: &'r Request<'_>) -> response::Result<'static> {
         match self.filetype {
             SupportedFiletype::Png => {
@@ -81,7 +81,7 @@ impl<'r, T: RenderableShield> Responder<'r, 'static> for Shield<T> {
                     .ok()
             }
             SupportedFiletype::Txt => {
-                let value = self.shield.render(&self.value);
+                let value = self.scield.render(&self.value);
                 Response::build()
                     .header(ContentType::Plain)
                     .sized_body(value.len(), Cursor::new(value))
@@ -91,19 +91,19 @@ impl<'r, T: RenderableShield> Responder<'r, 'static> for Shield<T> {
     }
 }
 
-pub struct ShieldRequest {
+pub struct ScieldRequest {
     pub body: String,
     pub filetype: SupportedFiletype,
 }
 
 #[derive(Debug)]
-pub enum ShieldRequestError {
+pub enum ScieldRequestError {
     InvalidBody,
     InvalidFiletype,
 }
 
-impl<'r> FromParam<'r> for ShieldRequest {
-    type Error = ShieldRequestError;
+impl<'r> FromParam<'r> for ScieldRequest {
+    type Error = ScieldRequestError;
 
     fn from_param(param: &'r str) -> Result<Self, Self::Error> {
         let path: PathBuf = PathBuf::from(param);
@@ -112,39 +112,39 @@ impl<'r> FromParam<'r> for ShieldRequest {
         if let Some(b) = stem {
             let body = String::from(b.to_str().unwrap());
             if param.ends_with(".png") {
-                Ok(ShieldRequest {
+                Ok(ScieldRequest {
                     body,
                     filetype: SupportedFiletype::Png,
                 })
             } else if param.ends_with(".svg") {
-                Ok(ShieldRequest {
+                Ok(ScieldRequest {
                     body,
                     filetype: SupportedFiletype::Svg,
                 })
             } else if param.ends_with(".txt") {
-                Ok(ShieldRequest {
+                Ok(ScieldRequest {
                     body,
                     filetype: SupportedFiletype::Txt,
                 })
             } else {
-                Err(ShieldRequestError::InvalidFiletype)
+                Err(ScieldRequestError::InvalidFiletype)
             }
         } else {
-            Err(ShieldRequestError::InvalidBody)
+            Err(ScieldRequestError::InvalidBody)
         }
     }
 }
 
-pub trait RenderableShield {
+pub trait RenderableScield {
     fn render(&self, value: &str) -> String;
 }
 
-pub struct TextShield {
+pub struct TextScield {
     pub prefix: &'static str,
     pub suffix: Option<&'static str>,
 }
 
-impl RenderableShield for TextShield {
+impl RenderableScield for TextScield {
     fn render(&self, value: &str) -> String {
         let prefix = format!("{} :: ", &self.prefix);
         let suffix = match &self.suffix {
@@ -155,13 +155,13 @@ impl RenderableShield for TextShield {
     }
 }
 
-pub struct StateShield {
+pub struct StateScield {
     pub prefix: Option<&'static str>,
     pub suffix: Option<&'static str>,
     pub states: phf::Map<&'static str, &'static str>,
 }
 
-impl RenderableShield for StateShield {
+impl RenderableScield for StateScield {
     fn render(&self, value: &str) -> String {
         let prefix = match &self.prefix {
             Some(s) => format!("{} :: ", &s),

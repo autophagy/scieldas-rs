@@ -1,8 +1,8 @@
 #[macro_use]
 extern crate rocket;
 
+mod scieldas;
 mod services;
-mod shields;
 mod utils;
 
 #[get("/")]
