@@ -1,4 +1,3 @@
-use std::collections::HashMap;
 use std::io::Cursor;
 
 use rocket::http::ContentType;
@@ -15,12 +14,13 @@ pub enum SupportedFiletype {
 
 pub struct Shield<T: RenderableShield> {
     pub shield: T,
+    pub value: String,
     pub filetype: SupportedFiletype,
 }
 
 impl<T: RenderableShield> Shield<T> {
-    fn to_svg(self) -> String {
-        let value = self.shield.render();
+    fn to_svg(&self) -> String {
+        let value = self.shield.render(&self.value);
         let mut svg: String = "".to_string();
         let width = (&value.len() * 7) + 32;
 
@@ -41,7 +41,7 @@ impl<T: RenderableShield> Shield<T> {
         svg
     }
 
-    fn to_png(self) -> Vec<u8> {
+    fn to_png(&self) -> Vec<u8> {
         let svg = self.to_svg();
         let mut opt = usvg::Options::default();
         opt.fontdb.load_system_fonts();
@@ -81,7 +81,7 @@ impl<'r, T: RenderableShield> Responder<'r, 'static> for Shield<T> {
                     .ok()
             }
             SupportedFiletype::Txt => {
-                let value = self.shield.render();
+                let value = self.shield.render(&self.value);
                 Response::build()
                     .header(ContentType::Plain)
                     .sized_body(value.len(), Cursor::new(value))
@@ -136,56 +136,33 @@ impl<'r> FromParam<'r> for ShieldRequest {
 }
 
 pub trait RenderableShield {
-    fn render(&self) -> String;
+    fn render(&self, value: &str) -> String;
 }
 
 pub struct TextShield {
-    pub prefix: String,
-    pub suffix: Option<String>,
-    pub value: String,
-}
-
-impl Default for TextShield {
-    fn default() -> TextShield {
-        TextShield {
-            prefix: "!".to_string(),
-            suffix: None,
-            value: "N/A".to_string(),
-        }
-    }
+    pub prefix: &'static str,
+    pub suffix: Option<&'static str>,
 }
 
 impl RenderableShield for TextShield {
-    fn render(&self) -> String {
+    fn render(&self, value: &str) -> String {
         let prefix = format!("{} :: ", &self.prefix);
         let suffix = match &self.suffix {
             Some(s) => format!(" {}", s),
             None => String::from(""),
         };
-        format!("{}{}{}", prefix, self.value, suffix)
+        format!("{}{}{}", prefix, &value, suffix)
     }
 }
 
 pub struct StateShield {
-    pub prefix: Option<String>,
-    pub suffix: Option<String>,
-    pub value: String,
-    pub states: HashMap<String, String>,
-}
-
-impl Default for StateShield {
-    fn default() -> StateShield {
-        StateShield {
-            prefix: None,
-            suffix: None,
-            value: "".to_string(),
-            states: HashMap::from([("".to_string(), "N/A".to_string())]),
-        }
-    }
+    pub prefix: Option<&'static str>,
+    pub suffix: Option<&'static str>,
+    pub states: phf::Map<&'static str, &'static str>,
 }
 
 impl RenderableShield for StateShield {
-    fn render(&self) -> String {
+    fn render(&self, value: &str) -> String {
         let prefix = match &self.prefix {
             Some(s) => format!("{} :: ", &s),
             None => "".to_string(),
@@ -194,7 +171,7 @@ impl RenderableShield for StateShield {
             Some(s) => format!(" {}", s),
             None => "".to_string(),
         };
-        let value = match self.states.get(&self.value) {
+        let value = match self.states.get(value) {
             Some(v) => v,
             None => "N/A",
         };

@@ -1,18 +1,21 @@
 use crate::shields::{Shield, ShieldRequest, StateShield};
-use std::collections::HashMap;
+use phf::phf_map;
+
+const LICENCE_SHIELD: StateShield = StateShield {
+    prefix: None,
+    suffix: None,
+    states: phf_map! {
+        "mit" => "MIT",
+        "apache" => "Apache 2",
+        "gpl" => "GPL 3",
+    },
+};
 
 #[get("/<license>")]
 pub async fn get_license(license: ShieldRequest) -> Shield<StateShield> {
     Shield {
-        shield: StateShield {
-            value: license.body,
-            states: HashMap::from([
-                ("mit".to_string(), "MIT".to_string()),
-                ("apache".to_string(), "Apache 2".to_string()),
-                ("gpl".to_string(), "GPL 3".to_string()),
-            ]),
-            ..Default::default()
-        },
+        shield: LICENCE_SHIELD,
+        value: license.body.to_lowercase(),
         filetype: license.filetype,
     }
 }

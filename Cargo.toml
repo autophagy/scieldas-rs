@@ -14,3 +14,4 @@ cached = "0.34.0"
 resvg = "0.22.0"
 usvg = "0.22.0"
 tiny-skia = "0.6.1"
+phf = { version = "0.11.1", features = ["macros"] }
