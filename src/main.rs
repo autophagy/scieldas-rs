@@ -19,17 +19,7 @@ fn health() -> &'static str {
 fn rocket() -> _ {
     rocket::build()
         .mount("/", routes![index, health])
-        .mount(
-            "/crates",
-            routes![
-                services::crates::get_crate_downloads,
-                services::crates::get_crate_version_downloads,
-                services::crates::get_crate_version
-            ],
-        )
-        .mount("/licenses", routes![services::licenses::get_license])
-        .mount(
-            "/codestyles",
-            routes![services::codestyles::get_python_style],
-        )
+        .mount("/crates", services::crates::routes())
+        .mount("/licenses", services::licenses::routes())
+        .mount("/codestyles", services::codestyles::routes())
 }

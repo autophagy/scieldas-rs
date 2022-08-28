@@ -11,8 +11,12 @@ const LICENCE_SCIELD: StateScield = StateScield {
     },
 };
 
+pub fn routes() -> Vec<rocket::Route> {
+    routes![license]
+}
+
 #[get("/<license>")]
-pub async fn get_license(license: ScieldRequest) -> Scield<StateScield> {
+async fn license(license: ScieldRequest) -> Scield<StateScield> {
     Scield {
         scield: LICENCE_SCIELD,
         value: license.body.to_lowercase(),

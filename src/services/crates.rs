@@ -13,8 +13,12 @@ const CRATE_VERSION_SCIELD: TextScield = TextScield {
     suffix: None,
 };
 
+pub fn routes() -> Vec<rocket::Route> {
+    routes![crate_downloads, crate_version_downloads, crate_version]
+}
+
 #[get("/downloads/<crate_name>")]
-pub async fn get_crate_downloads(crate_name: ScieldRequest) -> Option<Scield<TextScield>> {
+pub async fn crate_downloads(crate_name: ScieldRequest) -> Option<Scield<TextScield>> {
     let request_url = format!("{}/{}", CRATE_API_URL, crate_name.body);
 
     let downloads = get_payload(&request_url)
@@ -31,7 +35,7 @@ pub async fn get_crate_downloads(crate_name: ScieldRequest) -> Option<Scield<Tex
 }
 
 #[get("/downloads/<crate_name>/<version>")]
-pub async fn get_crate_version_downloads(
+pub async fn crate_version_downloads(
     crate_name: &str,
     version: ScieldRequest,
 ) -> Option<Scield<TextScield>> {
@@ -51,7 +55,7 @@ pub async fn get_crate_version_downloads(
 }
 
 #[get("/version/<crate_name>")]
-pub async fn get_crate_version(crate_name: ScieldRequest) -> Option<Scield<TextScield>> {
+pub async fn crate_version(crate_name: ScieldRequest) -> Option<Scield<TextScield>> {
     let request_url = format!("{}/{}", CRATE_API_URL, crate_name.body);
 
     let version = String::from(

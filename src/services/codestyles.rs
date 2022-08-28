@@ -11,8 +11,12 @@ const PYTHON_STYLE_SCIELD: StateScield = StateScield {
     },
 };
 
+pub fn routes() -> Vec<rocket::Route> {
+    routes![python_style]
+}
+
 #[get("/python/<codestyle>")]
-pub async fn get_python_style(codestyle: ScieldRequest) -> Scield<StateScield> {
+async fn python_style(codestyle: ScieldRequest) -> Scield<StateScield> {
     Scield {
         scield: PYTHON_STYLE_SCIELD,
         value: codestyle.body.to_lowercase(),
