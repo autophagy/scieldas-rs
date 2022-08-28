@@ -20,6 +20,7 @@ fn rocket() -> _ {
     rocket::build()
         .mount("/", routes![index, health])
         .mount("/crates", services::crates::routes())
+        .mount("/github", services::github::routes())
         .mount("/licenses", services::licenses::routes())
         .mount("/codestyles", services::codestyles::routes())
 }
