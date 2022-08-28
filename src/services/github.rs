@@ -1,5 +1,6 @@
-use crate::scieldas::{Scield, ScieldRequest, TextScield};
+use crate::scieldas::{Scield, ScieldRequest, StateScield, TextScield};
 use crate::utils::{get_payload, readable_number};
+use phf::phf_map;
 use rocket::request::FromParam;
 
 const GITHUB_API_URL: &str = "https://api.github.com";
@@ -37,6 +38,15 @@ const ISSUES_SCIELD: TextScield = TextScield {
 const PULL_REQUESTS_SCIELD: TextScield = TextScield {
     prefix: "Pull Requests",
     suffix: None,
+};
+
+const WORKFLOW_SCIELD: StateScield = StateScield {
+    prefix: Some("Build"),
+    suffix: None,
+    states: phf_map! {
+        "success" => "Passing",
+        "failure" => "Failing",
+    },
 };
 
 enum OpenState {
@@ -81,7 +91,8 @@ pub fn routes() -> Vec<rocket::Route> {
         followers,
         latest_release,
         issues,
-        pull_requests
+        pull_requests,
+        workflow
     ]
 }
 
@@ -210,5 +221,35 @@ async fn pull_requests(
         scield: PULL_REQUESTS_SCIELD,
         value: readable_number(pulls),
         filetype: repo.filetype,
+    })
+}
+
+#[get("/workflow/<owner>/<repo>/<workflow>/<branch>")]
+async fn workflow(
+    owner: &str,
+    repo: &str,
+    workflow: &str,
+    branch: ScieldRequest,
+) -> Option<Scield<StateScield>> {
+    let request_url = format!(
+        "{}/repos/{}/{}/actions/workflows/{}/runs?branch={}&per_page=1&status=completed",
+        GITHUB_API_URL, owner, repo, workflow, branch.body
+    );
+
+    let payload = get_payload(&request_url).await?;
+
+    let status = if payload.get("total_count")?.as_i64()? == 0 {
+        String::from("unknown")
+    } else {
+        payload.get("workflow_runs")?[0]
+            .get("conclusion")?
+            .as_str()?
+            .to_string()
+    };
+
+    Some(Scield {
+        scield: WORKFLOW_SCIELD,
+        value: status,
+        filetype: branch.filetype,
     })
 }
