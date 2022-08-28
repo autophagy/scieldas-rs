@@ -25,7 +25,7 @@
             in
             pkgs.dockerTools.buildLayeredImage {
               name = "scieldas";
-              contents = [ scieldas ];
+              contents = [ scieldas pkgs.cacert ];
               config = {
                 Env = [
                   "ROCKET_LOG_LEVEL=debug"
