@@ -1,5 +1,7 @@
 use crate::scieldas::{Scield, ScieldRequest, TextScield};
 use crate::utils::{get_payload, readable_number};
+use reqwest::Client;
+use rocket::State;
 
 const CRATE_API_URL: &str = "https://crates.io/api/v1/crates/";
 
@@ -18,10 +20,13 @@ pub fn routes() -> Vec<rocket::Route> {
 }
 
 #[get("/downloads/<crate_name>")]
-pub async fn crate_downloads(crate_name: ScieldRequest) -> Option<Scield<TextScield>> {
+pub async fn crate_downloads(
+    client: &State<Client>,
+    crate_name: ScieldRequest,
+) -> Option<Scield<TextScield>> {
     let request_url = format!("{}/{}", CRATE_API_URL, crate_name.body);
 
-    let downloads = get_payload(&request_url)
+    let downloads = get_payload(client, &request_url)
         .await?
         .get("crate")?
         .get("downloads")?
@@ -36,12 +41,13 @@ pub async fn crate_downloads(crate_name: ScieldRequest) -> Option<Scield<TextSci
 
 #[get("/downloads/<crate_name>/<version>")]
 pub async fn crate_version_downloads(
+    client: &State<Client>,
     crate_name: &str,
     version: ScieldRequest,
 ) -> Option<Scield<TextScield>> {
     let request_url = format!("{}/{}/{}", CRATE_API_URL, crate_name, version.body);
 
-    let downloads = get_payload(&request_url)
+    let downloads = get_payload(client, &request_url)
         .await?
         .get("version")?
         .get("downloads")?
@@ -55,11 +61,14 @@ pub async fn crate_version_downloads(
 }
 
 #[get("/version/<crate_name>")]
-pub async fn crate_version(crate_name: ScieldRequest) -> Option<Scield<TextScield>> {
+pub async fn crate_version(
+    client: &State<Client>,
+    crate_name: ScieldRequest,
+) -> Option<Scield<TextScield>> {
     let request_url = format!("{}/{}", CRATE_API_URL, crate_name.body);
 
     let version = String::from(
-        get_payload(&request_url)
+        get_payload(client, &request_url)
             .await?
             .get("crate")?
             .get("max_version")?

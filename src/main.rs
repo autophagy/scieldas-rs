@@ -5,6 +5,8 @@ mod scieldas;
 mod services;
 mod utils;
 
+use reqwest::Client;
+
 #[get("/")]
 fn index() -> &'static str {
     "Scieldas."
@@ -17,7 +19,10 @@ fn health() -> &'static str {
 
 #[launch]
 fn rocket() -> _ {
+    let client = Client::builder().user_agent("scieldas").build().unwrap();
+
     rocket::build()
+        .manage(client)
         .mount("/", routes![index, health])
         .mount("/crates", services::crates::routes())
         .mount("/github", services::github::routes())

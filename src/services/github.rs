@@ -1,7 +1,9 @@
 use crate::scieldas::{Scield, ScieldRequest, StateScield, TextScield};
 use crate::utils::{get_payload, readable_number};
 use phf::phf_map;
+use reqwest::Client;
 use rocket::request::FromParam;
+use rocket::State;
 
 const GITHUB_API_URL: &str = "https://api.github.com";
 
@@ -97,10 +99,14 @@ pub fn routes() -> Vec<rocket::Route> {
 }
 
 #[get("/watchers/<owner>/<repo>")]
-async fn watchers(owner: &str, repo: ScieldRequest) -> Option<Scield<TextScield>> {
+async fn watchers(
+    client: &State<Client>,
+    owner: &str,
+    repo: ScieldRequest,
+) -> Option<Scield<TextScield>> {
     let request_url = format!("{}/repos/{}/{}", GITHUB_API_URL, owner, repo.body);
 
-    let watchers = get_payload(&request_url)
+    let watchers = get_payload(client, &request_url)
         .await?
         .get("subscribers_count")?
         .as_f64()?;
@@ -113,10 +119,14 @@ async fn watchers(owner: &str, repo: ScieldRequest) -> Option<Scield<TextScield>
 }
 
 #[get("/forks/<owner>/<repo>")]
-async fn forks(owner: &str, repo: ScieldRequest) -> Option<Scield<TextScield>> {
+async fn forks(
+    client: &State<Client>,
+    owner: &str,
+    repo: ScieldRequest,
+) -> Option<Scield<TextScield>> {
     let request_url = format!("{}/repos/{}/{}", GITHUB_API_URL, owner, repo.body);
 
-    let forks = get_payload(&request_url)
+    let forks = get_payload(client, &request_url)
         .await?
         .get("forks_count")?
         .as_f64()?;
@@ -129,10 +139,14 @@ async fn forks(owner: &str, repo: ScieldRequest) -> Option<Scield<TextScield>> {
 }
 
 #[get("/stars/<owner>/<repo>")]
-async fn stars(owner: &str, repo: ScieldRequest) -> Option<Scield<TextScield>> {
+async fn stars(
+    client: &State<Client>,
+    owner: &str,
+    repo: ScieldRequest,
+) -> Option<Scield<TextScield>> {
     let request_url = format!("{}/repos/{}/{}", GITHUB_API_URL, owner, repo.body);
 
-    let stars = get_payload(&request_url)
+    let stars = get_payload(client, &request_url)
         .await?
         .get("stargazers_count")?
         .as_f64()?;
@@ -145,10 +159,10 @@ async fn stars(owner: &str, repo: ScieldRequest) -> Option<Scield<TextScield>> {
 }
 
 #[get("/followers/<user>")]
-async fn followers(user: ScieldRequest) -> Option<Scield<TextScield>> {
+async fn followers(client: &State<Client>, user: ScieldRequest) -> Option<Scield<TextScield>> {
     let request_url = format!("{}/users/{}", GITHUB_API_URL, user.body);
 
-    let followers = get_payload(&request_url)
+    let followers = get_payload(client, &request_url)
         .await?
         .get("followers")?
         .as_f64()?;
@@ -161,13 +175,22 @@ async fn followers(user: ScieldRequest) -> Option<Scield<TextScield>> {
 }
 
 #[get("/latest_release/<owner>/<repo>")]
-async fn latest_release(owner: &str, repo: ScieldRequest) -> Option<Scield<TextScield>> {
+async fn latest_release(
+    client: &State<Client>,
+    owner: &str,
+    repo: ScieldRequest,
+) -> Option<Scield<TextScield>> {
     let request_url = format!(
         "{}/repos/{}/{}/releases/latest",
         GITHUB_API_URL, owner, repo.body
     );
 
-    let latest_release = String::from(get_payload(&request_url).await?.get("tag_name")?.as_str()?);
+    let latest_release = String::from(
+        get_payload(client, &request_url)
+            .await?
+            .get("tag_name")?
+            .as_str()?,
+    );
 
     Some(Scield {
         scield: LATEST_RELEASE_SCIELD,
@@ -177,7 +200,12 @@ async fn latest_release(owner: &str, repo: ScieldRequest) -> Option<Scield<TextS
 }
 
 #[get("/issues/<state>/<owner>/<repo>")]
-async fn issues(state: OpenState, owner: &str, repo: ScieldRequest) -> Option<Scield<TextScield>> {
+async fn issues(
+    client: &State<Client>,
+    state: OpenState,
+    owner: &str,
+    repo: ScieldRequest,
+) -> Option<Scield<TextScield>> {
     let request_url = format!(
         "{}/search/issues?q=repo:{}/{}+is:issue{}",
         GITHUB_API_URL,
@@ -186,7 +214,7 @@ async fn issues(state: OpenState, owner: &str, repo: ScieldRequest) -> Option<Sc
         state.to_search_param()
     );
 
-    let issues = get_payload(&request_url)
+    let issues = get_payload(client, &request_url)
         .await?
         .get("total_count")?
         .as_f64()?;
@@ -200,6 +228,7 @@ async fn issues(state: OpenState, owner: &str, repo: ScieldRequest) -> Option<Sc
 
 #[get("/pull_requests/<state>/<owner>/<repo>")]
 async fn pull_requests(
+    client: &State<Client>,
     state: OpenState,
     owner: &str,
     repo: ScieldRequest,
@@ -212,7 +241,7 @@ async fn pull_requests(
         state.to_search_param()
     );
 
-    let pulls = get_payload(&request_url)
+    let pulls = get_payload(client, &request_url)
         .await?
         .get("total_count")?
         .as_f64()?;
@@ -226,6 +255,7 @@ async fn pull_requests(
 
 #[get("/workflow/<owner>/<repo>/<workflow>/<branch>")]
 async fn workflow(
+    client: &State<Client>,
     owner: &str,
     repo: &str,
     workflow: &str,
@@ -236,7 +266,7 @@ async fn workflow(
         GITHUB_API_URL, owner, repo, workflow, branch.body
     );
 
-    let payload = get_payload(&request_url).await?;
+    let payload = get_payload(client, &request_url).await?;
 
     let status = if payload.get("total_count")?.as_i64()? == 0 {
         String::from("unknown")
