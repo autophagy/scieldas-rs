@@ -28,8 +28,7 @@ pub async fn crate_downloads(
 
     let downloads = get_payload(client, &request_url)
         .await?
-        .get("crate")?
-        .get("downloads")?
+        .pointer("/crate/downloads")?
         .as_f64()?;
 
     Some(Scield {
@@ -49,8 +48,7 @@ pub async fn crate_version_downloads(
 
     let downloads = get_payload(client, &request_url)
         .await?
-        .get("version")?
-        .get("downloads")?
+        .pointer("/version/downloads")?
         .as_f64()?;
 
     Some(Scield {
@@ -70,8 +68,7 @@ pub async fn crate_version(
     let version = String::from(
         get_payload(client, &request_url)
             .await?
-            .get("crate")?
-            .get("max_version")?
+            .pointer("/crate/max_version")?
             .as_str()?,
     );
 

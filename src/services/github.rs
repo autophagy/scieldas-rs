@@ -271,8 +271,8 @@ async fn workflow(
     let status = if payload.get("total_count")?.as_i64()? == 0 {
         String::from("unknown")
     } else {
-        payload.get("workflow_runs")?[0]
-            .get("conclusion")?
+        payload
+            .pointer("/workflow_runs/0/conclusion")?
             .as_str()?
             .to_string()
     };
