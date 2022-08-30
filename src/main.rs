@@ -28,8 +28,6 @@ fn rocket() -> _ {
         Err(_) => opt.fontdb.load_system_fonts(),
     };
 
-    opt.fontdb.set_monospace_family("Inconsolata");
-
     rocket::build()
         .manage(client)
         .manage(opt)
