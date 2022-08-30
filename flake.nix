@@ -22,14 +22,20 @@
           docker =
             let
               inherit (self.packages.${system}) scieldas;
+              fonts = pkgs.nerdfonts.override { fonts = [ "Inconsolata" ]; };
             in
             pkgs.dockerTools.buildLayeredImage {
               name = "scieldas";
-              contents = [ scieldas pkgs.cacert ];
+              contents = [
+                scieldas
+                pkgs.cacert
+                fonts
+              ];
               config = {
                 Env = [
                   "ROCKET_LOG_LEVEL=debug"
                   "ROCKET_ADDRESS=0.0.0.0"
+                  "FONTS_DIR=${fonts}"
                 ];
                 Cmd = [
                   "${scieldas}/bin/scieldas"

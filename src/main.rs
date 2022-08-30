@@ -6,6 +6,7 @@ mod services;
 mod utils;
 
 use reqwest::Client;
+use std::env;
 
 #[get("/")]
 fn index() -> &'static str {
@@ -21,7 +22,12 @@ fn health() -> &'static str {
 fn rocket() -> _ {
     let client = Client::builder().user_agent("scieldas").build().unwrap();
     let mut opt = usvg::Options::default();
-    opt.fontdb.load_system_fonts();
+
+    match env::var("FONTS_DIR") {
+        Ok(dir) => opt.fontdb.load_fonts_dir(dir),
+        Err(_) => opt.fontdb.load_system_fonts(),
+    };
+
     opt.fontdb.set_monospace_family("Inconsolata");
 
     rocket::build()
