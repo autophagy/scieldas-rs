@@ -26,6 +26,7 @@
             in
             pkgs.dockerTools.buildLayeredImage {
               name = "scieldas";
+              tag = scieldas.version;
               contents = [
                 scieldas
                 pkgs.cacert
