@@ -41,14 +41,9 @@ impl<T: RenderableScield> Scield<T> {
         svg
     }
 
-    fn to_png(&self) -> Vec<u8> {
+    fn to_png(&self, opt: &usvg::Options) -> Vec<u8> {
         let svg = self.to_svg();
-        let mut opt = usvg::Options::default();
-        opt.fontdb.load_system_fonts();
-        opt.fontdb.set_monospace_family("Inconsolata");
-
         let rtree = usvg::Tree::from_str(&svg, &opt.to_ref()).unwrap();
-
         let pixmap_size = rtree.svg_node().size.to_screen_size();
         let mut pixmap = tiny_skia::Pixmap::new(pixmap_size.width(), pixmap_size.height()).unwrap();
         resvg::render(
@@ -64,10 +59,11 @@ impl<T: RenderableScield> Scield<T> {
 
 #[rocket::async_trait]
 impl<'r, T: RenderableScield> Responder<'r, 'static> for Scield<T> {
-    fn respond_to(self, _: &'r Request<'_>) -> response::Result<'static> {
+    fn respond_to(self, request: &'r Request<'_>) -> response::Result<'static> {
         match self.filetype {
             SupportedFiletype::Png => {
-                let png = self.to_png();
+                let opt: &usvg::Options = request.rocket().state().unwrap();
+                let png = self.to_png(opt);
                 Response::build()
                     .header(ContentType::PNG)
                     .sized_body(png.len(), Cursor::new(png))

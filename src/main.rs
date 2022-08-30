@@ -20,9 +20,13 @@ fn health() -> &'static str {
 #[launch]
 fn rocket() -> _ {
     let client = Client::builder().user_agent("scieldas").build().unwrap();
+    let mut opt = usvg::Options::default();
+    opt.fontdb.load_system_fonts();
+    opt.fontdb.set_monospace_family("Inconsolata");
 
     rocket::build()
         .manage(client)
+        .manage(opt)
         .mount("/", routes![index, health])
         .mount("/crates", services::crates::routes())
         .mount("/github", services::github::routes())
