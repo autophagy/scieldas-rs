@@ -16,7 +16,7 @@ pub fn routes() -> Vec<rocket::Route> {
 }
 
 #[get("/python/<codestyle>")]
-async fn python_style(codestyle: ScieldRequest) -> Scield<StateScield> {
+async fn python_style(codestyle: ScieldRequest) -> Scield<String, StateScield> {
     Scield {
         scield: PYTHON_STYLE_SCIELD,
         value: codestyle.body.to_lowercase(),

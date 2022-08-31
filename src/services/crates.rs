@@ -1,5 +1,5 @@
 use crate::scieldas::{Scield, ScieldRequest, TextScield};
-use crate::utils::{get_payload, readable_number};
+use crate::utils::get_payload;
 use reqwest::Client;
 use rocket::State;
 
@@ -23,7 +23,7 @@ pub fn routes() -> Vec<rocket::Route> {
 pub async fn crate_downloads(
     client: &State<Client>,
     crate_name: ScieldRequest,
-) -> Option<Scield<TextScield>> {
+) -> Option<Scield<f64, TextScield>> {
     let request_url = format!("{}/{}", CRATE_API_URL, crate_name.body);
 
     let downloads = get_payload(client, &request_url)
@@ -33,7 +33,7 @@ pub async fn crate_downloads(
 
     Some(Scield {
         scield: CRATE_DOWNLOADS_SCIELD,
-        value: readable_number(downloads),
+        value: downloads,
         filetype: crate_name.filetype,
     })
 }
@@ -43,7 +43,7 @@ pub async fn crate_version_downloads(
     client: &State<Client>,
     crate_name: &str,
     version: ScieldRequest,
-) -> Option<Scield<TextScield>> {
+) -> Option<Scield<f64, TextScield>> {
     let request_url = format!("{}/{}/{}", CRATE_API_URL, crate_name, version.body);
 
     let downloads = get_payload(client, &request_url)
@@ -53,7 +53,7 @@ pub async fn crate_version_downloads(
 
     Some(Scield {
         scield: CRATE_DOWNLOADS_SCIELD,
-        value: readable_number(downloads),
+        value: downloads,
         filetype: version.filetype,
     })
 }
@@ -62,7 +62,7 @@ pub async fn crate_version_downloads(
 pub async fn crate_version(
     client: &State<Client>,
     crate_name: ScieldRequest,
-) -> Option<Scield<TextScield>> {
+) -> Option<Scield<String, TextScield>> {
     let request_url = format!("{}/{}", CRATE_API_URL, crate_name.body);
 
     let version = String::from(

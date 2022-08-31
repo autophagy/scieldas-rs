@@ -16,7 +16,7 @@ pub fn routes() -> Vec<rocket::Route> {
 }
 
 #[get("/<license>")]
-async fn license(license: ScieldRequest) -> Scield<StateScield> {
+async fn license(license: ScieldRequest) -> Scield<String, StateScield> {
     Scield {
         scield: LICENCE_SCIELD,
         value: license.body.to_lowercase(),

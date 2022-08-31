@@ -1,5 +1,5 @@
 use crate::scieldas::{Scield, ScieldRequest, StateScield, TextScield};
-use crate::utils::{get_payload, readable_number};
+use crate::utils::get_payload;
 use phf::phf_map;
 use reqwest::Client;
 use rocket::request::FromParam;
@@ -103,7 +103,7 @@ async fn watchers(
     client: &State<Client>,
     owner: &str,
     repo: ScieldRequest,
-) -> Option<Scield<TextScield>> {
+) -> Option<Scield<f64, TextScield>> {
     let request_url = format!("{}/repos/{}/{}", GITHUB_API_URL, owner, repo.body);
 
     let watchers = get_payload(client, &request_url)
@@ -113,7 +113,7 @@ async fn watchers(
 
     Some(Scield {
         scield: WATCHERS_SCIELD,
-        value: readable_number(watchers),
+        value: watchers,
         filetype: repo.filetype,
     })
 }
@@ -123,7 +123,7 @@ async fn forks(
     client: &State<Client>,
     owner: &str,
     repo: ScieldRequest,
-) -> Option<Scield<TextScield>> {
+) -> Option<Scield<f64, TextScield>> {
     let request_url = format!("{}/repos/{}/{}", GITHUB_API_URL, owner, repo.body);
 
     let forks = get_payload(client, &request_url)
@@ -133,7 +133,7 @@ async fn forks(
 
     Some(Scield {
         scield: FORKS_SCIELD,
-        value: readable_number(forks),
+        value: forks,
         filetype: repo.filetype,
     })
 }
@@ -143,7 +143,7 @@ async fn stars(
     client: &State<Client>,
     owner: &str,
     repo: ScieldRequest,
-) -> Option<Scield<TextScield>> {
+) -> Option<Scield<f64, TextScield>> {
     let request_url = format!("{}/repos/{}/{}", GITHUB_API_URL, owner, repo.body);
 
     let stars = get_payload(client, &request_url)
@@ -153,13 +153,13 @@ async fn stars(
 
     Some(Scield {
         scield: STARS_SCIELD,
-        value: readable_number(stars),
+        value: stars,
         filetype: repo.filetype,
     })
 }
 
 #[get("/followers/<user>")]
-async fn followers(client: &State<Client>, user: ScieldRequest) -> Option<Scield<TextScield>> {
+async fn followers(client: &State<Client>, user: ScieldRequest) -> Option<Scield<f64, TextScield>> {
     let request_url = format!("{}/users/{}", GITHUB_API_URL, user.body);
 
     let followers = get_payload(client, &request_url)
@@ -169,7 +169,7 @@ async fn followers(client: &State<Client>, user: ScieldRequest) -> Option<Scield
 
     Some(Scield {
         scield: FOLLOWERS_SCIELD,
-        value: readable_number(followers),
+        value: followers,
         filetype: user.filetype,
     })
 }
@@ -179,7 +179,7 @@ async fn latest_release(
     client: &State<Client>,
     owner: &str,
     repo: ScieldRequest,
-) -> Option<Scield<TextScield>> {
+) -> Option<Scield<String, TextScield>> {
     let request_url = format!(
         "{}/repos/{}/{}/releases/latest",
         GITHUB_API_URL, owner, repo.body
@@ -205,7 +205,7 @@ async fn issues(
     state: OpenState,
     owner: &str,
     repo: ScieldRequest,
-) -> Option<Scield<TextScield>> {
+) -> Option<Scield<f64, TextScield>> {
     let request_url = format!(
         "{}/search/issues?q=repo:{}/{}+is:issue{}",
         GITHUB_API_URL,
@@ -221,7 +221,7 @@ async fn issues(
 
     Some(Scield {
         scield: ISSUES_SCIELD,
-        value: readable_number(issues),
+        value: issues,
         filetype: repo.filetype,
     })
 }
@@ -232,7 +232,7 @@ async fn pull_requests(
     state: OpenState,
     owner: &str,
     repo: ScieldRequest,
-) -> Option<Scield<TextScield>> {
+) -> Option<Scield<f64, TextScield>> {
     let request_url = format!(
         "{}/search/issues?q=repo:{}/{}+is:pr{}",
         GITHUB_API_URL,
@@ -248,7 +248,7 @@ async fn pull_requests(
 
     Some(Scield {
         scield: PULL_REQUESTS_SCIELD,
-        value: readable_number(pulls),
+        value: pulls,
         filetype: repo.filetype,
     })
 }
@@ -260,7 +260,7 @@ async fn workflow(
     repo: &str,
     workflow: &str,
     branch: ScieldRequest,
-) -> Option<Scield<StateScield>> {
+) -> Option<Scield<String, StateScield>> {
     let request_url = format!(
         "{}/repos/{}/{}/actions/workflows/{}/runs?branch={}&per_page=1&status=completed",
         GITHUB_API_URL, owner, repo, workflow, branch.body
