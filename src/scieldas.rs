@@ -91,7 +91,7 @@ impl<A, T: RenderableScield<A>> Scield<A, T> {
         );
         svg.push_str(&head);
 
-        svg.push_str(r##"<rect fill="#2D2D2D" height="100%" width="100%" x="0" y="0" />"##);
+        svg.push_str(r##"<rect fill="#282828" height="100%" width="100%" x="0" y="0" />"##);
         let b = format!(
             r##"<text fill="#F2F2F2" font-family="Inconsolata Nerd Font, Inconsolata, monospace" font-size="140" textLength="{}" transform="scale(.1)" x="160" y="240">{}</text>"##,
             (width * 10) - 320,
