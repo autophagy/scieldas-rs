@@ -22,7 +22,7 @@ pub fn routes() -> Vec<rocket::Route> {
 #[get("/downloads/<crate_name>")]
 pub async fn crate_downloads(
     client: &State<Client>,
-    crate_name: ScieldRequest,
+    crate_name: ScieldRequest<String>,
 ) -> Option<Scield<f64, TextScield>> {
     let request_url = format!("{}/{}", CRATE_API_URL, crate_name.body);
 
@@ -42,7 +42,7 @@ pub async fn crate_downloads(
 pub async fn crate_version_downloads(
     client: &State<Client>,
     crate_name: &str,
-    version: ScieldRequest,
+    version: ScieldRequest<String>,
 ) -> Option<Scield<f64, TextScield>> {
     let request_url = format!("{}/{}/{}", CRATE_API_URL, crate_name, version.body);
 
@@ -61,7 +61,7 @@ pub async fn crate_version_downloads(
 #[get("/version/<crate_name>")]
 pub async fn crate_version(
     client: &State<Client>,
-    crate_name: ScieldRequest,
+    crate_name: ScieldRequest<String>,
 ) -> Option<Scield<String, TextScield>> {
     let request_url = format!("{}/{}", CRATE_API_URL, crate_name.body);
 

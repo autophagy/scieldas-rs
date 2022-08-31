@@ -6,6 +6,7 @@ use rocket::response::{self, Responder, Response};
 
 use std::cmp;
 use std::path::PathBuf;
+use std::str::FromStr;
 
 /// Scield Request
 /// ==============
@@ -16,8 +17,8 @@ pub enum SupportedFiletype {
     Txt,
 }
 
-pub struct ScieldRequest {
-    pub body: String,
+pub struct ScieldRequest<T: FromStr> {
+    pub body: T,
     pub filetype: SupportedFiletype,
 }
 
@@ -27,7 +28,7 @@ pub enum ScieldRequestError {
     InvalidFiletype,
 }
 
-impl<'r> FromParam<'r> for ScieldRequest {
+impl<'r, T: FromStr> FromParam<'r> for ScieldRequest<T> {
     type Error = ScieldRequestError;
 
     fn from_param(param: &'r str) -> Result<Self, Self::Error> {
@@ -35,24 +36,27 @@ impl<'r> FromParam<'r> for ScieldRequest {
         let stem = path.file_stem();
 
         if let Some(b) = stem {
-            let body = String::from(b.to_str().unwrap());
-            if param.ends_with(".png") {
-                Ok(ScieldRequest {
-                    body,
-                    filetype: SupportedFiletype::Png,
-                })
-            } else if param.ends_with(".svg") {
-                Ok(ScieldRequest {
-                    body,
-                    filetype: SupportedFiletype::Svg,
-                })
-            } else if param.ends_with(".txt") {
-                Ok(ScieldRequest {
-                    body,
-                    filetype: SupportedFiletype::Txt,
-                })
+            if let Ok(body) = T::from_str(b.to_str().unwrap()) {
+                if param.ends_with(".png") {
+                    Ok(ScieldRequest {
+                        body,
+                        filetype: SupportedFiletype::Png,
+                    })
+                } else if param.ends_with(".svg") {
+                    Ok(ScieldRequest {
+                        body,
+                        filetype: SupportedFiletype::Svg,
+                    })
+                } else if param.ends_with(".txt") {
+                    Ok(ScieldRequest {
+                        body,
+                        filetype: SupportedFiletype::Txt,
+                    })
+                } else {
+                    Err(ScieldRequestError::InvalidFiletype)
+                }
             } else {
-                Err(ScieldRequestError::InvalidFiletype)
+                Err(ScieldRequestError::InvalidBody)
             }
         } else {
             Err(ScieldRequestError::InvalidBody)
@@ -66,20 +70,20 @@ impl<'r> FromParam<'r> for ScieldRequest {
 /// Trait for a renderable scield. A scield must implement this trait to turn
 /// a given value into a scieldic representation, usually with some prefix and
 /// transformation of the input value.
-pub trait RenderableScield<T> {
+pub trait RenderableScield<T: ToString> {
     fn render(&self, value: &T) -> String;
 }
 
 /// Scield
 /// ======
 
-pub struct Scield<A, T: RenderableScield<A>> {
+pub struct Scield<A: ToString, T: RenderableScield<A>> {
     pub scield: T,
     pub value: A,
     pub filetype: SupportedFiletype,
 }
 
-impl<A, T: RenderableScield<A>> Scield<A, T> {
+impl<A: ToString, T: RenderableScield<A>> Scield<A, T> {
     fn to_svg(&self) -> String {
         let value = self.scield.render(&self.value);
         let mut svg: String = "".to_string();
@@ -119,7 +123,7 @@ impl<A, T: RenderableScield<A>> Scield<A, T> {
 }
 
 #[rocket::async_trait]
-impl<'r, A, T: RenderableScield<A>> Responder<'r, 'static> for Scield<A, T> {
+impl<'r, A: ToString, T: RenderableScield<A>> Responder<'r, 'static> for Scield<A, T> {
     fn respond_to(self, request: &'r Request<'_>) -> response::Result<'static> {
         match self.filetype {
             SupportedFiletype::Png => {
@@ -215,11 +219,10 @@ fn readable_number(number: f64) -> String {
 pub struct StateScield {
     pub prefix: Option<&'static str>,
     pub suffix: Option<&'static str>,
-    pub states: phf::Map<&'static str, &'static str>,
 }
 
-impl RenderableScield<String> for StateScield {
-    fn render(&self, value: &String) -> String {
+impl<A: ToString> RenderableScield<A> for StateScield {
+    fn render(&self, value: &A) -> String {
         let prefix = match &self.prefix {
             Some(s) => format!("{} :: ", &s),
             None => "".to_string(),
@@ -228,10 +231,7 @@ impl RenderableScield<String> for StateScield {
             Some(s) => format!(" {}", s),
             None => "".to_string(),
         };
-        let value = match self.states.get(value) {
-            Some(v) => v,
-            None => "N/A",
-        };
+        let value = value.to_string();
         format!("{}{}{}", prefix, value, suffix)
     }
 }

@@ -1,9 +1,9 @@
 use crate::scieldas::{Scield, ScieldRequest, StateScield, TextScield};
 use crate::utils::get_payload;
-use phf::phf_map;
 use reqwest::Client;
 use rocket::request::FromParam;
 use rocket::State;
+use std::str::FromStr;
 
 const GITHUB_API_URL: &str = "https://api.github.com";
 
@@ -42,13 +42,39 @@ const PULL_REQUESTS_SCIELD: TextScield = TextScield {
     suffix: None,
 };
 
+enum WorkflowState {
+    Passing,
+    Failing,
+    Unknown,
+}
+
+#[derive(Debug)]
+struct ParseWorkflowStateError;
+
+impl FromStr for WorkflowState {
+    type Err = ParseWorkflowStateError;
+    fn from_str(s: &str) -> Result<WorkflowState, ParseWorkflowStateError> {
+        match s {
+            "success" => Ok(WorkflowState::Passing),
+            "failure" => Ok(WorkflowState::Failing),
+            _ => Ok(WorkflowState::Unknown),
+        }
+    }
+}
+
+impl ToString for WorkflowState {
+    fn to_string(&self) -> String {
+        match &self {
+            WorkflowState::Passing => "Passing".to_string(),
+            WorkflowState::Failing => "Failing".to_string(),
+            WorkflowState::Unknown => "Unknown".to_string(),
+        }
+    }
+}
+
 const WORKFLOW_SCIELD: StateScield = StateScield {
     prefix: Some("Build"),
     suffix: None,
-    states: phf_map! {
-        "success" => "Passing",
-        "failure" => "Failing",
-    },
 };
 
 enum OpenState {
@@ -102,7 +128,7 @@ pub fn routes() -> Vec<rocket::Route> {
 async fn watchers(
     client: &State<Client>,
     owner: &str,
-    repo: ScieldRequest,
+    repo: ScieldRequest<String>,
 ) -> Option<Scield<f64, TextScield>> {
     let request_url = format!("{}/repos/{}/{}", GITHUB_API_URL, owner, repo.body);
 
@@ -122,7 +148,7 @@ async fn watchers(
 async fn forks(
     client: &State<Client>,
     owner: &str,
-    repo: ScieldRequest,
+    repo: ScieldRequest<String>,
 ) -> Option<Scield<f64, TextScield>> {
     let request_url = format!("{}/repos/{}/{}", GITHUB_API_URL, owner, repo.body);
 
@@ -142,7 +168,7 @@ async fn forks(
 async fn stars(
     client: &State<Client>,
     owner: &str,
-    repo: ScieldRequest,
+    repo: ScieldRequest<String>,
 ) -> Option<Scield<f64, TextScield>> {
     let request_url = format!("{}/repos/{}/{}", GITHUB_API_URL, owner, repo.body);
 
@@ -159,7 +185,10 @@ async fn stars(
 }
 
 #[get("/followers/<user>")]
-async fn followers(client: &State<Client>, user: ScieldRequest) -> Option<Scield<f64, TextScield>> {
+async fn followers(
+    client: &State<Client>,
+    user: ScieldRequest<String>,
+) -> Option<Scield<f64, TextScield>> {
     let request_url = format!("{}/users/{}", GITHUB_API_URL, user.body);
 
     let followers = get_payload(client, &request_url)
@@ -178,7 +207,7 @@ async fn followers(client: &State<Client>, user: ScieldRequest) -> Option<Scield
 async fn latest_release(
     client: &State<Client>,
     owner: &str,
-    repo: ScieldRequest,
+    repo: ScieldRequest<String>,
 ) -> Option<Scield<String, TextScield>> {
     let request_url = format!(
         "{}/repos/{}/{}/releases/latest",
@@ -204,7 +233,7 @@ async fn issues(
     client: &State<Client>,
     state: OpenState,
     owner: &str,
-    repo: ScieldRequest,
+    repo: ScieldRequest<String>,
 ) -> Option<Scield<f64, TextScield>> {
     let request_url = format!(
         "{}/search/issues?q=repo:{}/{}+is:issue{}",
@@ -231,7 +260,7 @@ async fn pull_requests(
     client: &State<Client>,
     state: OpenState,
     owner: &str,
-    repo: ScieldRequest,
+    repo: ScieldRequest<String>,
 ) -> Option<Scield<f64, TextScield>> {
     let request_url = format!(
         "{}/search/issues?q=repo:{}/{}+is:pr{}",
@@ -259,8 +288,8 @@ async fn workflow(
     owner: &str,
     repo: &str,
     workflow: &str,
-    branch: ScieldRequest,
-) -> Option<Scield<String, StateScield>> {
+    branch: ScieldRequest<String>,
+) -> Option<Scield<WorkflowState, StateScield>> {
     let request_url = format!(
         "{}/repos/{}/{}/actions/workflows/{}/runs?branch={}&per_page=1&status=completed",
         GITHUB_API_URL, owner, repo, workflow, branch.body
@@ -277,9 +306,12 @@ async fn workflow(
             .to_string()
     };
 
-    Some(Scield {
-        scield: WORKFLOW_SCIELD,
-        value: status,
-        filetype: branch.filetype,
-    })
+    match WorkflowState::from_str(&status) {
+        Ok(value) => Some(Scield {
+            scield: WORKFLOW_SCIELD,
+            value,
+            filetype: branch.filetype,
+        }),
+        Err(_) => None,
+    }
 }

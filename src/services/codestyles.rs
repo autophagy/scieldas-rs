@@ -1,14 +1,39 @@
 use crate::scieldas::{Scield, ScieldRequest, StateScield};
-use phf::phf_map;
+use std::str::FromStr;
+
+enum PythonStyle {
+    Black,
+    Yapf,
+    AutoPEP8,
+}
+
+struct ParseStyleError;
+
+impl FromStr for PythonStyle {
+    type Err = ParseStyleError;
+    fn from_str(s: &str) -> Result<PythonStyle, ParseStyleError> {
+        match s {
+            "black" => Ok(PythonStyle::Black),
+            "yapf" => Ok(PythonStyle::Yapf),
+            "autopep8" => Ok(PythonStyle::AutoPEP8),
+            _ => Err(ParseStyleError),
+        }
+    }
+}
+
+impl ToString for PythonStyle {
+    fn to_string(&self) -> String {
+        match &self {
+            PythonStyle::Black => "Black".to_string(),
+            PythonStyle::Yapf => "YAPF".to_string(),
+            PythonStyle::AutoPEP8 => "AutoPEP8".to_string(),
+        }
+    }
+}
 
 const PYTHON_STYLE_SCIELD: StateScield = StateScield {
     prefix: Some("Style"),
     suffix: None,
-    states: phf_map! {
-        "black" => "Black",
-        "yapf" => "Yapf",
-        "autopep8" => "AutoPEP8",
-    },
 };
 
 pub fn routes() -> Vec<rocket::Route> {
@@ -16,10 +41,10 @@ pub fn routes() -> Vec<rocket::Route> {
 }
 
 #[get("/python/<codestyle>")]
-async fn python_style(codestyle: ScieldRequest) -> Scield<String, StateScield> {
+async fn python_style(codestyle: ScieldRequest<PythonStyle>) -> Scield<PythonStyle, StateScield> {
     Scield {
         scield: PYTHON_STYLE_SCIELD,
-        value: codestyle.body.to_lowercase(),
+        value: codestyle.body,
         filetype: codestyle.filetype,
     }
 }
