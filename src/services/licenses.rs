@@ -13,7 +13,7 @@ impl FromStr for Licence {
     type Err = ParseLicenceError;
 
     fn from_str(s: &str) -> Result<Licence, ParseLicenceError> {
-        match s {
+        match &s.to_lowercase()[..] {
             "mit" => Ok(Licence::Mit),
             "apache" => Ok(Licence::Apache),
             "gpl" => Ok(Licence::Gpl),

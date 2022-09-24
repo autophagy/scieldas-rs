@@ -12,7 +12,7 @@ struct ParseStyleError;
 impl FromStr for PythonStyle {
     type Err = ParseStyleError;
     fn from_str(s: &str) -> Result<PythonStyle, ParseStyleError> {
-        match s {
+        match &s.to_lowercase()[..] {
             "black" => Ok(PythonStyle::Black),
             "yapf" => Ok(PythonStyle::Yapf),
             "autopep8" => Ok(PythonStyle::AutoPEP8),
